@@ -2,6 +2,8 @@ package com.david.agendadortarefas.controller;
 
 import com.david.agendadortarefas.business.TaskService;
 import com.david.agendadortarefas.business.dto.TaskDTO;
+import com.david.agendadortarefas.infrastructure.enums.TaskStatusEnum;
+import com.david.agendadortarefas.infrastructure.exceprions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +29,8 @@ public class TaskController {
 
     @GetMapping("/events")
     public ResponseEntity<List<TaskDTO>> findTaskListByPeriod(
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime initialDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime finalDate
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime initialDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime finalDate
     ) {
         return ResponseEntity.ok(taskService.findTasksByPeriod(initialDate, finalDate));
     }
@@ -36,5 +38,28 @@ public class TaskController {
     @GetMapping
     public ResponseEntity<List<TaskDTO>> findTasksByUserEmail(@RequestHeader("Authorization") String token) {
         return ResponseEntity.ok(taskService.findTasksByUserEmail(token));
+    }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteTaskById(@RequestParam("id") String id) {
+        try {
+            taskService.deleteTaskById(id);
+            return ResponseEntity.ok().build();
+        } catch (ResourceNotFoundException e) {
+            throw new ResourceNotFoundException("id não encontrado! " + e.getCause());
+        }
+    }
+
+    @PatchMapping
+    public ResponseEntity<TaskDTO> changeStatus(
+            @RequestParam("status")TaskStatusEnum status,
+            @RequestParam("id") String id
+    ) {
+        return ResponseEntity.ok(taskService.changeStatus(status, id));
+    }
+
+    @PutMapping
+    public ResponseEntity<TaskDTO> updateTasks(@RequestBody TaskDTO taskDTO, @RequestParam("id") String id) {
+        return ResponseEntity.ok(taskService.updateTasks(taskDTO, id));
     }
 }
